@@ -14,7 +14,8 @@ if ($slug !== '') {
 }
 
 if (!$post) {
-  render_head('Artigo não encontrado — ' . SITE_NAME);
+  http_response_code(404);
+  render_head('Artigo não encontrado — ' . SITE_NAME, '', '', ['robots'=>'noindex, follow']);
   render_header();
   echo '<main style="max-width:680px;margin:0 auto;padding:120px 24px;text-align:center">
     <h1 style="font-size:32px">Artigo não encontrado</h1>
@@ -27,7 +28,7 @@ if (!$post) {
 }
 
 // contador de visitas (+1)
-try { $pdo->prepare("UPDATE posts SET views = views + 1 WHERE id = ?")->execute([$post['id']]); } catch (Exception $e) {}
+try { $pdo->prepare("UPDATE posts SET views = views + 1, updated_at = updated_at WHERE id = ?")->execute([$post['id']]); } catch (Exception $e) {}
 
 // relacionados
 $rel = $pdo->prepare("SELECT p.*, u.name AS author_name FROM posts p LEFT JOIN users u ON u.id=p.author_id
@@ -40,7 +41,37 @@ $url = BLOG_URL . '/post.php?slug=' . urlencode($post['slug']);
 $shareText = $post['title'] . ' — ' . SITE_NAME;
 $avatar = author_avatar($post['author_avatar']);
 
-render_head($post['title'] . ' — ' . SITE_NAME, $post['excerpt']);
+$coverAbs = !empty($post['cover']) ? (preg_match('~^https?://~',$post['cover']) ? $post['cover'] : BLOG_URL . '/' . ltrim($post['cover'],'/')) : SITE_URL . '/assets/logo-gf.png';
+$pubIso = date('c', strtotime($post['publish_at'] ?: $post['created_at']));
+$modIso = date('c', strtotime($post['updated_at'] ?? ($post['publish_at'] ?: $post['created_at'])));
+$authorName = $post['author_name'] ?: SITE_NAME;
+$ld = [
+  '@context' => 'https://schema.org',
+  '@graph' => [
+    [
+      '@type' => 'BlogPosting',
+      'headline' => $post['title'],
+      'description' => strip_tags($post['excerpt']),
+      'image' => [$coverAbs],
+      'datePublished' => $pubIso,
+      'dateModified' => $modIso,
+      'articleSection' => $post['category'],
+      'inLanguage' => 'pt-BR',
+      'mainEntityOfPage' => $url,
+      'author' => ($authorName === SITE_NAME) ? ['@type'=>'Organization','name'=>SITE_NAME,'url'=>SITE_URL] : ['@type'=>'Person','name'=>$authorName,'worksFor'=>['@type'=>'Organization','name'=>SITE_NAME]],
+      'publisher' => ['@type'=>'Organization','name'=>SITE_NAME,'logo'=>['@type'=>'ImageObject','url'=>SITE_URL.'/assets/logo-gf.png']],
+    ],
+    [
+      '@type' => 'BreadcrumbList',
+      'itemListElement' => [
+        ['@type'=>'ListItem','position'=>1,'name'=>'Início','item'=>SITE_URL.'/'],
+        ['@type'=>'ListItem','position'=>2,'name'=>'Blog','item'=>BLOG_URL.'/'],
+        ['@type'=>'ListItem','position'=>3,'name'=>$post['title'],'item'=>$url],
+      ],
+    ],
+  ],
+];
+render_head($post['title'] . ' | Blog ' . SITE_NAME, $post['excerpt'], '', ['canonical'=>$url,'image'=>$coverAbs,'type'=>'article','jsonld'=>$ld]);
 render_header();
 ?>
 <div class="article-head">

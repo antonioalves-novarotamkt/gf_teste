@@ -35,7 +35,14 @@ function meta_html($p){
   return '<div class="post-meta"><span>'.e($p['author_name'] ?: SITE_NAME).'</span><span class="dot"></span><span>'.fmt_date($p['publish_at'] ?: $p['created_at']).'</span></div>';
 }
 
-render_head('Blog — ' . SITE_NAME, 'Conteúdo sobre auditoria, finanças, gestão e cases — Goellner Ferreira.');
+$isFiltered = ($cat !== '' && $cat !== 'Todos') || $q !== '';
+$blogLd = ['@context'=>'https://schema.org','@type'=>'Blog','name'=>'Blog Goellner Ferreira','url'=>BLOG_URL.'/','inLanguage'=>'pt-BR','publisher'=>['@type'=>'Organization','name'=>SITE_NAME,'url'=>SITE_URL]];
+render_head(
+  ($cat !== '' && $cat !== 'Todos' ? $cat . ' | ' : '') . 'Blog Goellner Ferreira: auditoria, finanças e gestão empresarial',
+  'Artigos sobre auditoria, consultoria estratégica, finanças corporativas, governança, compliance e perícia contábil, escritos pelos sócios da Goellner Ferreira.',
+  '',
+  ['canonical' => BLOG_URL . '/' . (($cat !== '' && $cat !== 'Todos') ? '?cat=' . urlencode($cat) : ''), 'robots' => $q !== '' ? 'noindex, follow' : 'index, follow', 'jsonld' => $blogLd]
+);
 render_header();
 ?>
 <section class="blog-hero">

@@ -43,9 +43,27 @@ function author_avatar($file){
 }
 
 /* ---------------- Cabeçalho ---------------- */
-function render_head($title, $desc = '', $extra_css = ''){
+function render_head($title, $desc = '', $extra_css = '', $opts = []){
   $t = e($title);
-  $d = e($desc ?: 'Blog da Goellner Ferreira — auditoria, finanças, gestão e cases.');
+  $d = e(mb_substr(strip_tags($desc ?: 'Blog da Goellner Ferreira: artigos sobre auditoria, consultoria estratégica, finanças, governança, compliance e cases de empresas.'),0,160));
+  $canon = e($opts['canonical'] ?? (BLOG_URL . '/'));
+  $img = e($opts['image'] ?? (SITE_URL . '/assets/logo-gf.png'));
+  $type = e($opts['type'] ?? 'website');
+  $robots = e($opts['robots'] ?? 'index, follow, max-image-preview:large');
+  $ld = isset($opts['jsonld']) ? '<script type="application/ld+json">' . json_encode($opts['jsonld'], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) . '</script>' : '';
+  $extra_css = '<link rel="canonical" href="'.$canon.'" />
+<meta name="robots" content="'.$robots.'" />
+<meta property="og:type" content="'.$type.'" />
+<meta property="og:site_name" content="Goellner Ferreira" />
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:title" content="'.$t.'" />
+<meta property="og:description" content="'.$d.'" />
+<meta property="og:url" content="'.$canon.'" />
+<meta property="og:image" content="'.$img.'" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="alternate" type="application/rss+xml" title="Blog Goellner Ferreira" href="'.BLOG_URL.'/rss.php" />
+'.$ld."
+".$extra_css;
   echo <<<HTML
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -70,28 +88,42 @@ HTML;
 
 function render_header(){
   $site = SITE_URL;
-  echo '<header class="site-header" data-stuck="false" id="siteHeader">
-    <div class="wrap nav">
-      <a href="'.$site.'"><img class="nav-logo" src="assets/logo-gf.png" alt="Goellner Ferreira" /></a>
-      <nav class="nav-links">
-        <a class="nav-link" href="'.$site.'/#inicio">Início</a>
-        <a class="nav-link" href="'.$site.'/#sobre">Sobre</a>
-        <a class="nav-link" href="'.$site.'/#solucoes">Soluções</a>
-        <a class="nav-link active" href="index.php">Blog</a>
-        <a class="nav-link" href="'.$site.'/#contato">Contato</a>
-      </nav>
-      <div class="nav-cta"><a class="btn btn-accent" href="'.$site.'/#contato">Fale com um especialista</a></div>
-      <button class="hamburger" aria-label="Menu" onclick="document.getElementById(\'mm\').classList.toggle(\'open\')"><span></span><span></span><span></span></button>
-    </div>
-    <div class="mobile-menu" id="mm">
-      <a href="'.$site.'/#inicio">Início</a>
-      <a href="'.$site.'/#sobre">Sobre</a>
-      <a href="'.$site.'/#solucoes">Soluções</a>
-      <a href="index.php">Blog</a>
-      <a href="'.$site.'/#contato">Contato</a>
-    </div>
-  </header>
-  <script>(function(){var h=document.getElementById("siteHeader");function f(){h.setAttribute("data-stuck",window.scrollY>12);}f();window.addEventListener("scroll",f);})();</script>';
+  echo '<style id="gfh-css">
+.gfh{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(10,33,80,.08);font-family:"Montserrat",system-ui,sans-serif;transition:box-shadow .3s}
+.gfh[data-stuck="true"]{box-shadow:0 4px 20px rgba(16,30,68,.06)}
+.gfh *{box-sizing:border-box}
+.gfh-in{max-width:1180px;margin:0 auto;padding:0 clamp(20px,5vw,58px);display:flex;align-items:center;gap:20px;height:84px}
+.gfh-logo{display:flex;flex:none}.gfh-logo img{height:56px;width:auto;display:block}
+.gfh-links{display:flex;align-items:center;gap:2px;margin-left:auto}
+.gfh-links a{font-size:14.5px;font-weight:600;color:#14203f;padding:9px 13px;border-radius:999px;text-decoration:none;white-space:nowrap;transition:background .16s,color .16s}
+.gfh-links a:hover{background:#f3efe7;color:#ff5757}
+.gfh-links a.on{color:#ff5757}
+.gfh-wm{display:inline-flex!important;align-items:center;gap:6px;color:#56607a!important;font-weight:600!important}
+.gfh-wm svg{width:16px;height:16px}
+.gfh-sep{width:1px;height:22px;background:rgba(10,33,80,.14);margin:0 8px}
+.gfh-cta{flex:none;display:inline-flex;align-items:center;font-size:14px;font-weight:700;color:#fff!important;background:#ff5757;padding:11px 20px;border-radius:999px;text-decoration:none;white-space:nowrap;box-shadow:0 8px 22px rgba(255,87,87,.24);transition:transform .18s}
+.gfh-cta:hover{transform:translateY(-2px);color:#fff}
+.gfh-burger{display:none;margin-left:auto;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:10px}
+.gfh-burger span{width:26px;height:2px;background:#0a2150;border-radius:2px;display:block}
+.gfh-mm{display:none;flex-direction:column;padding:6px clamp(20px,5vw,58px) 22px;background:#fbf9f4;border-top:1px solid rgba(10,33,80,.07)}
+.gfh-mm.open{display:flex}
+.gfh-mm a{padding:14px 4px;font-size:15.5px;font-weight:600;color:#14203f;text-decoration:none;border-bottom:1px solid rgba(10,33,80,.07)}
+.gfh-mm a.on{color:#ff5757}
+.gfh-mm .gfh-cta{margin-top:16px;justify-content:center;border:0;padding:14px 20px;font-size:15px}
+@media(max-width:1260px){.gfh-links a{padding:9px 10px}.gfh-sep{margin:0 4px}.gfh-wm{font-size:0!important;gap:0}.gfh-in{gap:14px}}
+@media(max-width:1140px){.gfh-links,.gfh-in>.gfh-cta{display:none}.gfh-burger{display:flex}}
+@media(max-width:640px){.gfh-in{height:70px}.gfh-logo img{height:46px}}
+</style>
+<header class="gfh" id="gfh" data-stuck="false">
+  <div class="gfh-in">
+    <a class="gfh-logo" href="'.$site.'/"><img src="assets/logo-gf.png" alt="Goellner Ferreira — consultoria estratégica e auditoria" /></a>
+    <nav class="gfh-links"><a href="'.$site.'/#sobre">Sobre</a><a href="'.$site.'/#solucoes">Soluções</a><a href="'.$site.'/#socios">Sócios</a><a href="index.php" class="on">Blog</a><a href="'.$site.'/cases.html">Clientes</a><a href="'.$site.'/#contato">Contato</a><span class="gfh-sep"></span><a class="gfh-wm" href="https://webmail-seguro.com.br/goellnerferreira.com.br/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"/><path d="M3 7l9 6 9-6"/></svg>Webmail</a></nav>
+    <a class="gfh-cta" href="'.$site.'/#contato">Fale com um especialista</a>
+    <button class="gfh-burger" aria-label="Abrir menu" onclick="document.getElementById(\'gfhmm\').classList.toggle(\'open\')"><span></span><span></span><span></span></button>
+  </div>
+  <div class="gfh-mm" id="gfhmm"><a href="'.$site.'/#sobre">Sobre</a><a href="'.$site.'/#solucoes">Soluções</a><a href="'.$site.'/#socios">Sócios</a><a href="index.php" class="on">Blog</a><a href="'.$site.'/cases.html">Clientes</a><a href="'.$site.'/#contato">Contato</a><a href="https://webmail-seguro.com.br/goellnerferreira.com.br/" target="_blank" rel="noopener">Webmail</a><a class="gfh-cta" href="'.$site.'/#contato">Fale com um especialista</a></div>
+</header>
+<script>(function(){var h=document.getElementById(\'gfh\');function f(){h.setAttribute(\'data-stuck\',window.scrollY>12);}f();window.addEventListener(\'scroll\',f);document.querySelectorAll(\'#gfhmm a\').forEach(function(a){a.addEventListener(\'click\',function(){document.getElementById(\'gfhmm\').classList.remove(\'open\');});});})();</script>';
 }
 
 function render_footer(){
@@ -109,6 +141,6 @@ function render_footer(){
       <div class="footer-col"><h5>Navegação</h5><a href="'.$site.'/#inicio">Início</a><a href="'.$site.'/#sobre">Sobre</a><a href="'.$site.'/#solucoes">Soluções</a><a href="index.php">Blog</a><a href="'.$site.'/#contato">Contato</a></div>
       <div class="footer-col"><h5>Contato</h5>'.$contatos.'<a href="'.$insta.'" target="_blank" rel="noopener">@goellnerferreira</a></div>
     </div>
-    <div class="wrap footer-bottom"><span>© '.$year.' Goellner Ferreira. Todos os direitos reservados.</span><span class="footer-credit">Desenvolvido por <a href="https://www.agencianovarota.com.br" target="_blank" rel="noopener">NovaRotaMkt</a></span></div>
+    <div class="wrap footer-bottom"><span>© '.$year.' Goellner Ferreira. Todos os direitos reservados.</span><span class="footer-credit">Desenvolvido por <a href="https://novarotamkt.com.br" target="_blank" rel="noopener">NovaRotaMkt</a></span></div>
   </footer>';
 }
