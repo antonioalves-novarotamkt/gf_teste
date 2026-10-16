@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://goellnerferreira.com.br/sitemap.xml
+Sitemap: https://goellnerferreira.com.br/blog/sitemap.php
+
+# Bloqueia acesso a arquivos internos do blog
+Disallow: /blog/config.php
+Disallow: /blog/db.php
+Disallow: /blog/functions.php
+Disallow: /blog/setup.php
+Disallow: /blog/admin/
